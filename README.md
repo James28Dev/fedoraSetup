@@ -40,11 +40,43 @@ defaultyes=True
 keepcache=True
 best=True
 ```
+
 ## ติดตั้ง NVIDIA Driver
+   - ติดตั้ง Nvidia packages 
 ```ini
 sudo dnf install akmod-nvidia xorg-x11-drv-nvidia-cuda
 ```
-ตรวจสอบการติดตั้ง
+   - ตรวจสอบการติดตั้ง
 ```ini
 nvidia-smi
+```
+
+## ติดตั้งเครื่องมือพื้นฐาน
+```ini
+sudo dnf install wget curl git gcc make python3 python3-pip gnome-tweaks backintime-gnome timeshift zsh
+```
+
+## ทำความสะอาด DNF Cache
+   - ล้าง cache ของ DNF ทั้งหมด
+```ini
+sudo dnf clean all
+```
+
+## ตั้งค่า ZSH
+### ตรวจสอบ Shell ปัจจุบัน
+```ini
+echo $SHELL
+```
+
+### ติดตั้ง ZSH
+```ini
+sudo dnf install zsh
+```
+   - ให้ zsh เป็นค่าเริ่มต้น
+```ini
+chsh -s $(which zsh)
+```
+   - ปิด terminal / console หรือพิมพ์
+```ini
+zsh
 ```
