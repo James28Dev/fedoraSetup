@@ -23,22 +23,16 @@ sudo nano /etc/dnf/dnf.conf
 ```
    - เพิ่มข้อมูลในไฟล์ล่าง [Main]
 ```ini
-max_parallel_downloads=20
 fastestmirror=True
 defaultyes=True
-keepcache=True
+gpgcheck=1
 best=True
-```
-   - ตัวอย่าง
-```
-# see `man dnf.conf` for defaults and possible options
-
-[main]
+clean_requirements_on_remove=True
+installonly_limit=3
 max_parallel_downloads=20
-fastestmirror=True
-defaultyes=True
-keepcache=True
-best=True
+keepcache=False
+retries=5
+color=always
 ```
 
 ## ติดตั้ง NVIDIA Driver
@@ -49,29 +43,6 @@ sudo dnf install akmod-nvidia xorg-x11-drv-nvidia-cuda
    - ตรวจสอบการติดตั้ง
 ```ini
 nvidia-smi
-```
-   - ตัวอย่าง
-```ini
-Sun Nov 16 21:47:18 2025       
-+-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 580.105.08             Driver Version: 580.105.08     CUDA Version: 13.0     |
-+-----------------------------------------+------------------------+----------------------+
-| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
-|                                         |                        |               MIG M. |
-|=========================================+========================+======================|
-|   0  NVIDIA GeForce GTX 1650 Ti     Off |   00000000:01:00.0 Off |                  N/A |
-| N/A   37C    P8              1W /   41W |       4MiB /   4096MiB |      0%      Default |
-|                                         |                        |                  N/A |
-+-----------------------------------------+------------------------+----------------------+
-
-+-----------------------------------------------------------------------------------------+
-| Processes:                                                                              |
-|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
-|        ID   ID                                                               Usage      |
-|=========================================================================================|
-|    0   N/A  N/A            3380      G   /usr/bin/gnome-shell                      1MiB |
-+-----------------------------------------------------------------------------------------+
 ```
 
 ## ติดตั้งเครื่องมือพื้นฐาน
