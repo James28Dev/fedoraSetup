@@ -1,127 +1,225 @@
-# settingFedora
+# 🚀 คู่มือตั้งค่า **Fedora Linux 43** หลังติดตั้งใหม่
 
-คู่มือการตั้งค่า Fedora Linux หลังติดตั้งใหม่ พร้อมปรับการใช้งานร่วมกับ Windows
+ปรับระบบให้ลื่น ใช้งานร่วมกับ Windows ได้ดี พร้อมสำหรับสาย Dev เต็มรูปแบบ
 
 ---
 
-## ตั้งค่า Windows
-### ปิด Fast Startup
-   - เปิด `Control Panel` > `Power Options` > `Choose what the power buttons do` > `Change settings that are currently unavailable`
-   - ยกเลิก `Turn on fast startup` > `Save changes`
+## 🎯 1) เตรียม Windows ให้พร้อมสำหรับ Dual‑Boot
 
-### ตรวจสอบพาร์ติชัน clean
-   - เปิด `Command Prompt (Admin)`
-   - รัน (เปลี่ยน D: ตามไดฟ์)
-```ini
+### ⚡ ปิด Fast Startup
+
+ช่วยป้องกัน NTFS ค้างสถานะ ทำให้ Fedora เขียนข้อมูลไม่ได้
+
+```
+Control Panel → Power Options → Choose what the power buttons do
+Change settings that are currently unavailable
+ปิด ✔ Turn on fast startup
+```
+
+### 🧹 ตรวจสอบไดรฟ์ Windows ให้ clean
+
+```
 chkdsk D: -f
 ```
-## ลบโปรแกรมที่ไม่ได้ใช้งาน
-```ini
-sudo dnf remove -y gnome-contacts gnome-weather gnome-maps gnome-tour gnome-color-manager simple-scan gnome-font-viewer gnome-system-monitor gnome-calendar gnome-connections mediawriter
+
+เปลี่ยน `D:` ตามไดรฟ์ที่แชร์ร่วมกัน
+
+---
+
+## 🧽 2) ลบแอป GNOME ที่ไม่จำเป็น
+
+```
+sudo dnf remove -y \
+  gnome-contacts gnome-weather gnome-maps gnome-tour gnome-color-manager \
+  simple-scan gnome-font-viewer gnome-system-monitor gnome-calendar \
+  gnome-connections mediawriter
 ```
 
-## ตั้งค่า DNF
-   - แก้ไขไฟล์ `dnf.conf`:
-```ini
+---
+
+## ⚙️ 3) ปรับแต่ง DNF ให้เร็วขึ้น
+
+เปิดไฟล์คอนฟิก:
+
+```
 sudo nano /etc/dnf/dnf.conf
 ```
-   - เพิ่มข้อมูลในไฟล์ `dnf.conf`
-```ini
+
+เพิ่ม:
+
+```
 fastestmirror=True
-defaultyes=True
-gpgcheck=1
+max_parallel_downloads=20
 best=True
 clean_requirements_on_remove=True
 installonly_limit=3
-max_parallel_downloads=20
-keepcache=False
 retries=5
 color=always
 ```
 
-## ติดตั้ง NVIDIA Driver
-   - ติดตั้ง Nvidia packages 
-```ini
+---
+
+## 🟩 4) ติดตั้งไดรเวอร์ NVIDIA
+
+```
 sudo dnf install akmod-nvidia xorg-x11-drv-nvidia-cuda
 ```
-   - ตรวจสอบการติดตั้ง
-```ini
+
+ตรวจสอบ:
+
+```
 nvidia-smi
 ```
 
-## ติดตั้งเครื่องมือพื้นฐาน
-```ini
-sudo dnf install wget curl git gcc make python3 python3-pip gnome-tweaks backintime-gnome zsh
+---
+
+## 📦 5) ติดตั้งเครื่องมือพื้นฐาน
+
 ```
-## อัปเดทและอัปเกตระบบ
-```ini
-sudo dnf update  || sudo dnf upgrade
+sudo dnf install wget curl git gcc make python3 /
+  python3-pip gnome-tweaks backintime-gnome zsh
 ```
 
-## ทำความสะอาด DNF Cache
-   - ล้าง cache ของ DNF ทั้งหมด
-```ini
-sudo dnf clean all
+---
+
+## 🔄 6) อัปเดตระบบ
+
+```
+sudo dnf update || sudo dnf clean all
 ```
 
-## ตั้งค่า ZSH
-### ตรวจสอบ Shell ปัจจุบัน
-```ini
+---
+
+## 🐚 7) ตั้งค่า ZSH + Oh‑My‑Zsh
+
+ตรวจสอบ Shell:
+
+```
 echo $SHELL
 ```
 
-### ติดตั้ง Oh-My-Zsh
-```ini
+ติดตั้ง Oh‑My‑Zsh:
+
+```
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
-   - ให้ zsh เป็นค่าเริ่มต้น
-```ini
+
+ตั้งให้เป็นค่าเริ่มต้น:
+
+```
 chsh -s $(which zsh)
 ```
 
-### ติดตั้ง Plugins
-   - zsh-syntax-highlighting plugin
-```ini
+---
+
+## 🔌 8) ปลั๊กอินสำคัญของ ZSH
+
+### zsh-syntax-highlighting
+
+```
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting
 ```
-   - zsh-autocomplete plugin 
-```ini
+
+### zsh-autocomplete
+
+```
 git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git $ZSH_CUSTOM/plugins/zsh-autocomplete
 ```
 
-### แก้ไขไฟล์ ~/.zshrc 
-เปิดไฟล์ ~/.zshrc 
-```ini
-sudo nano ~/.zshrc
+เพิ่มใน `~/.zshrc`:
+
 ```
-จาก plugins=(git) เป็น 
-```ini
 plugins=(git zsh-autocomplete zsh-syntax-highlighting)
 ```
 
-### ติดตั้ง Oh-My-Posh
-```ini
+---
+
+## 🎨 9) Oh‑My‑Posh + ฟอนต์สวย ๆ
+
+ติดตั้ง:
+
+```
 curl -s https://ohmyposh.dev/install.sh | bash -s
 ```
-   - ติดตั้ง font fira-mono
-```ini
+
+ฟอนต์:
+
+```
 oh-my-posh font install FiraMono
-```   
-   - ติดตั้ง Themes
-สร้างโฟลเดอร์เก็บ theme
-```ini
+```
+
+ธีม:
+
+สร้าง folder เก็บ themes
+
+```
 mkdir -p ~/.poshthemes
 ```
-โหลด .omp.json ของ theme เก็บใน ~/.poshthemes
-```ini
-curl -o ~/.poshthemes/cloud-native-azure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/refs/heads/main/themes/cloud-native-azure.omp.json
+
+โหลด Theme จาก GitHub
+
 ```
-แก้ไขไฟล์ ~/.zshrc โหลด theme:
-เปิดไฟล์ ~/.zshrc 
-```ini
-sudo nano ~/.zshrc
+curl -o ~/.poshthemes/cloud-native-azure.omp.json \
+  https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/refs/heads/main/themes/cloud-native-azure.omp.json
 ```
-```ini
+
+ตั้งค่าใน `~/.zshrc`:
+
+```
 export POSH_THEMES_PATH="$HOME/.poshthemes"
 eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"
 ```
+
+---
+
+# 📁 ตั้งค่า SharedData ให้เมานต์อัตโนมัติแบบอ่าน‑เขียน
+
+เหมาะมากสำหรับการแชร์ไฟล์ระหว่าง Fedora ↔ Windows
+
+## 📌 สร้างตำแหน่งเมานต์ใน Home
+
+```
+mkdir -p ~/SharedData
+```
+
+## 🔍 หา UUID ของพาร์ติชัน NTFS
+
+```
+sudo blkid
+```
+
+ตัวอย่าง:
+
+```
+/dev/nvme0n1p5: UUID="1234-ABCD" TYPE="ntfs"
+```
+
+## 📝 เพิ่มใน /etc/fstab เพื่อเมานต์อัตโนมัติ
+
+```
+sudo nano /etc/fstab
+```
+
+เพิ่มบรรทัด:
+
+```
+UUID=1234-ABCD  /home/user/SharedData  ntfs-3g  defaults,uid=1000,gid=1000,windows_names,locale=en_US.utf8 0 0
+```
+
+## 🔧 ทดสอบเมานต์
+
+```
+sudo mount -a
+```
+
+ทดสอบเขียนไฟล์:
+
+```
+touch ~/SharedData/testfile
+```
+
+ถ้าสร้างได้ = พร้อมใช้งาน
+
+---
+
+# 🎉 พร้อมใช้งานเต็มที่!
