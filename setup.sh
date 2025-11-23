@@ -23,7 +23,7 @@ show_version() {
     ver_cmd=$2
     if command -v "$cmd" &> /dev/null; then
         echo -n "$cmd version: "
-        $ver_cmd
+        eval "$ver_cmd"
         sleep 10
     fi
 }
@@ -38,6 +38,7 @@ sudo dnf install -y \
     https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-43.noarch.rpm || true
 
 error_check "Enable RPM Fusion repos"
+sleep 10
 
 #############################################
 # 1. CLEAN UNUSED PACKAGES
@@ -59,6 +60,7 @@ sudo dnf remove -y \
     || true
 
 error_check "Removing unused apps"
+sleep 10
 
 #############################################
 # 2. DNF CONFIG
@@ -80,6 +82,7 @@ color=always
 EOF
 
 error_check "Apply DNF config"
+sleep 10
 
 #############################################
 # 3. INSTALL STARTER PACK
@@ -87,8 +90,6 @@ error_check "Apply DNF config"
 step "Install starter packages"
 
 starter_packages=(
-    akmod-nvidia
-    xorg-x11-drv-nvidia-cuda
     wget
     curl
     git
@@ -99,14 +100,18 @@ starter_packages=(
     gnome-tweaks
     backintime-gnome
     zsh
+    akmod-nvidia
+    xorg-x11-drv-nvidia-cuda
 )
 
 sudo dnf install -y "${starter_packages[@]}" || true
 error_check "Install starter packages"
 
-for pkg in "${starter_packages[@]}"; do
-    show_version "$pkg" "$pkg --version || $pkg -V || echo 'version not available'"
-done
+# แสดงเวอร์ชันหลัก
+show_version git "git --version"
+show_version python3 "python3 --version"
+show_version gcc "gcc --version | head -n1"
+show_version zsh "zsh --version"
 
 #############################################
 # 4. ZSH CONFIG
@@ -131,6 +136,7 @@ grep -qxF 'export POSH_THEMES_PATH="$HOME/.poshthemes"' ~/.zshrc || echo 'export
 grep -qxF 'eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"' ~/.zshrc || echo 'eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"' >> ~/.zshrc
 
 error_check "Configure Zsh theme and plugins"
+sleep 10
 
 #############################################
 # 5. INSTALL GENERAL PACK (Flatpak apps)
@@ -149,7 +155,8 @@ general_apps=(
 
 for app in "${general_apps[@]}"; do
     flatpak install -y flathub "$app" || true
-    flatpak info "$app" || echo "$app info not available"
+    ver=$(flatpak info --show-version "$app" 2>/dev/null || echo "version not available")
+    echo "$app version: $ver"
     sleep 10
 done
 
@@ -160,11 +167,14 @@ error_check "Install general apps"
 #############################################
 step "Install Flutter SDK"
 
-# ดาวน์โหลด Flutter SDK ล่าสุด
 cd ~/Downloads || exit
 wget -c -P ~/Downloads https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.13.9-stable.tar.xz
 tar xf ~/Downloads/flutter_linux_3.13.9-stable.tar.xz -C ~
 grep -qxF 'export PATH="$HOME/flutter/bin:$PATH"' ~/.zshrc || echo 'export PATH="$HOME/flutter/bin:$PATH"' >> ~/.zshrc
+
+# แสดงเวอร์ชัน Flutter
+eval "$HOME/flutter/bin/flutter --version"
+sleep 10
 
 error_check "Install Flutter SDK"
 
