@@ -60,5 +60,60 @@ EOF
 
 error_check "Apply DNF config"
 
-echo -e "\n=== Completed initial steps ==="
+#############################################
+# 3. INSTALL STARTER PACK
+#############################################
+step "Install starter packages"
+
+sudo dnf install -y \
+    akmod-nvidia \
+    xorg-x11-drv-nvidia-cuda \
+    wget \
+    curl \
+    git \
+    gcc \
+    make \
+    python3 \
+    python3-pip \
+    gnome-tweaks \
+    backintime-gnome \
+    zsh \
+    || true
+
+error_check "Install starter packages"
+
+#############################################
+# 4. ZSH CONFIG
+#############################################
+step "Configure Zsh and Oh-My-Zsh"
+
+# เปลี่ยน zsh เป็นค่าเริ่มต้น
+chsh -s "$(which zsh)" || true
+
+# Install Oh-My-Zsh
+export RUNZSH=no  # ป้องกัน shell รีสตาร์ทอัตโนมัติ
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+error_check "Install Oh-My-Zsh"
+
+# Install plugins
+ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting || true
+git clone --depth 1 https://github.com/marlonrichert/zsh-autocomplete.git $ZSH_CUSTOM/plugins/zsh-autocomplete || true
+
+# Update ~/.zshrc plugins
+sed -i 's/^plugins=.*/plugins=(git zsh-autocomplete zsh-syntax-highlighting)/' ~/.zshrc
+
+# Install Oh-My-Posh
+curl -s https://ohmyposh.dev/install.sh | bash -s
+oh-my-posh font install FiraMono || true
+mkdir -p ~/.poshthemes
+curl -o ~/.poshthemes/cloud-native-azure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/refs/heads/main/themes/cloud-native-azure.omp.json
+
+# Load theme in ~/.zshrc
+grep -qxF 'export POSH_THEMES_PATH="$HOME/.poshthemes"' ~/.zshrc || echo 'export POSH_THEMES_PATH="$HOME/.poshthemes"' >> ~/.zshrc
+grep -qxF 'eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"' ~/.zshrc || echo 'eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"' >> ~/.zshrc
+
+error_check "Configure Zsh theme and plugins"
+
+echo -e "\n=== Completed all steps ==="
 echo "Check setup_log.txt for details."
