@@ -123,6 +123,12 @@ echo -e "${GREEN}---------------------------------------------------------${RESE
 
 FLATPAK_APPS=(
     com.visualstudio.code
+    com.google.AndroidStudio
+    com.brave.Browser
+    org.onlyoffice.desktopeditors
+    com.obsproject.Studio
+    com.mattjakeman.ExtensionManager
+    io.missioncenter.MissionCenter
 )
 
 for app in "${FLATPAK_APPS[@]}"; do
