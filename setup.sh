@@ -18,6 +18,27 @@ error_check() {
     fi
 }
 
+show_version() {
+    cmd=$1
+    ver_cmd=$2
+    if command -v "$cmd" &> /dev/null; then
+        echo -n "$cmd version: "
+        $ver_cmd
+        sleep 10
+    fi
+}
+
+#############################################
+# 0. OPEN RPM FUSION
+#############################################
+step "Enable RPM Fusion repos"
+
+sudo dnf install -y \
+    https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-43.noarch.rpm \
+    https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-43.noarch.rpm || true
+
+error_check "Enable RPM Fusion repos"
+
 #############################################
 # 1. CLEAN UNUSED PACKAGES
 #############################################
@@ -65,59 +86,87 @@ error_check "Apply DNF config"
 #############################################
 step "Install starter packages"
 
-sudo dnf install -y \
-    akmod-nvidia \
-    xorg-x11-drv-nvidia-cuda \
-    wget \
-    curl \
-    git \
-    gcc \
-    make \
-    python3 \
-    python3-pip \
-    gnome-tweaks \
-    backintime-gnome \
-    zsh \
-    || true
+starter_packages=(
+    akmod-nvidia
+    xorg-x11-drv-nvidia-cuda
+    wget
+    curl
+    git
+    gcc
+    make
+    python3
+    python3-pip
+    gnome-tweaks
+    backintime-gnome
+    zsh
+)
 
+sudo dnf install -y "${starter_packages[@]}" || true
 error_check "Install starter packages"
+
+for pkg in "${starter_packages[@]}"; do
+    show_version "$pkg" "$pkg --version || $pkg -V || echo 'version not available'"
+done
 
 #############################################
 # 4. ZSH CONFIG
 #############################################
 step "Configure Zsh and Oh-My-Zsh"
 
-# เปลี่ยน zsh เป็นค่าเริ่มต้น
 chsh -s "$(which zsh)" || true
+export RUNZSH=no
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
 
-# Install Oh-My-Zsh
-export RUNZSH=no         # ป้องกัน shell รีสตาร์ทอัตโนมัติ
-export CHSH=no           # ป้องกันเปลี่ยน shell อัตโนมัติ
-
-# ดาวน์โหลดและติดตั้ง Oh My Zsh แบบ non-interactive
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-
-error_check "Install Oh-My-Zsh"
-
-# Install plugins
 ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting || true
 git clone --depth 1 https://github.com/marlonrichert/zsh-autocomplete.git $ZSH_CUSTOM/plugins/zsh-autocomplete || true
-
-# Update ~/.zshrc plugins
 sed -i 's/^plugins=.*/plugins=(git zsh-autocomplete zsh-syntax-highlighting)/' ~/.zshrc
 
-# Install Oh-My-Posh
 curl -s https://ohmyposh.dev/install.sh | bash -s
 oh-my-posh font install FiraMono || true
 mkdir -p ~/.poshthemes
 curl -o ~/.poshthemes/cloud-native-azure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/refs/heads/main/themes/cloud-native-azure.omp.json
 
-# Load theme in ~/.zshrc
 grep -qxF 'export POSH_THEMES_PATH="$HOME/.poshthemes"' ~/.zshrc || echo 'export POSH_THEMES_PATH="$HOME/.poshthemes"' >> ~/.zshrc
 grep -qxF 'eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"' ~/.zshrc || echo 'eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"' >> ~/.zshrc
 
 error_check "Configure Zsh theme and plugins"
+
+#############################################
+# 5. INSTALL GENERAL PACK (Flatpak apps)
+#############################################
+step "Install general apps (Flatpak)"
+
+general_apps=(
+    com.visualstudio.code
+    com.google.AndroidStudio
+    com.brave.Browser
+    org.onlyoffice.desktopeditors
+    com.obsproject.Studio
+    com.mattjakeman.ExtensionManager
+    io.missioncenter.MissionCenter
+)
+
+for app in "${general_apps[@]}"; do
+    flatpak install -y flathub "$app" || true
+    flatpak info "$app" || echo "$app info not available"
+    sleep 10
+done
+
+error_check "Install general apps"
+
+#############################################
+# 6. INSTALL FLUTTER
+#############################################
+step "Install Flutter SDK"
+
+# ดาวน์โหลด Flutter SDK ล่าสุด
+cd ~/Downloads || exit
+wget -c -P ~/Downloads https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.13.9-stable.tar.xz
+tar xf ~/Downloads/flutter_linux_3.13.9-stable.tar.xz -C ~
+grep -qxF 'export PATH="$HOME/flutter/bin:$PATH"' ~/.zshrc || echo 'export PATH="$HOME/flutter/bin:$PATH"' >> ~/.zshrc
+
+error_check "Install Flutter SDK"
 
 echo -e "\n=== Completed all steps ==="
 echo "Check setup_log.txt for details."
