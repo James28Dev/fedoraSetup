@@ -41,10 +41,10 @@ for pkg in "${REMOVE_PKGS[@]}"; do
     if rpm -q "$pkg" &>/dev/null; then
         echo "Removing $pkg ..."
         sudo rpm -e --nodeps "$pkg" || true
-        echo "$pkg removed."
-        wait1
+        echo "done."
     fi
 done
+wait1
 
 ### ---------------------------------------------------------
 ### 2. CONFIGURE DNF
@@ -54,6 +54,7 @@ echo -e "${GREEN}2. CONFIGURE DNF${RESET}"
 echo -e "${GREEN}---------------------------------------------------------${RESET}"
 
 sudo tee /etc/dnf/dnf.conf >/dev/null <<'EOF'
+[main]
 fastestmirror=True
 defaultyes=True
 gpgcheck=1
@@ -65,12 +66,15 @@ keepcache=False
 retries=5
 color=always
 EOF
+
 echo "dnf.conf updated."
 wait1
 
 sudo dnf update -y
 sudo dnf upgrade -y
+echo "system updated and upgraded."
 wait1
+
 
 ### ---------------------------------------------------------
 ### 3. INSTALL FLATPAK (IF NOT INSTALLED)
