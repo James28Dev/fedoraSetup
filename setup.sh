@@ -1,16 +1,26 @@
 #!/usr/bin/env bash
 set -e
 
-wait5() {
-    echo "🕒 รอ 5 วินาที..."
-    sleep 5
+# ฟังก์ชันหน่วงเวลา 1 วินาที
+wait1() {
+    echo -e "🕒 รอ 1 วินาที..."
+    sleep 1
 }
 
-echo "=== Fedora 43 One-Setup Started ==="
+# สีข้อความ
+GREEN="\e[32m"
+CYAN="\e[36m"
+RESET="\e[0m"
+
+echo -e "${CYAN}=== Fedora 43 One-Setup Started ===${RESET}"
 
 ### ---------------------------------------------------------
 ### 1. REMOVE USELESS PREINSTALLED GNOME APPS
 ### ---------------------------------------------------------
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
+echo -e "${GREEN}1. REMOVE USELESS PREINSTALLED GNOME APPS${RESET}"
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
+
 REMOVE_PKGS=(
     gnome-contacts
     gnome-weather
@@ -32,18 +42,18 @@ for pkg in "${REMOVE_PKGS[@]}"; do
         echo "Removing $pkg ..."
         sudo rpm -e --nodeps "$pkg" || true
         echo "$pkg removed."
+        wait1
     fi
 done
-wait5
 
 ### ---------------------------------------------------------
 ### 2. CONFIGURE DNF
 ### ---------------------------------------------------------
-echo "--- Applying optimized dnf.conf settings..."
-sudo tee /etc/dnf/dnf.conf >/dev/null <<'EOF'
-# see dnf.conf for defaults and possible options
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
+echo -e "${GREEN}2. CONFIGURE DNF${RESET}"
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
 
-[main]
+sudo tee /etc/dnf/dnf.conf >/dev/null <<'EOF'
 fastestmirror=True
 defaultyes=True
 gpgcheck=1
@@ -56,74 +66,61 @@ retries=5
 color=always
 EOF
 echo "dnf.conf updated."
-wait5
+wait1
 
 sudo dnf update -y
 sudo dnf upgrade -y
-wait5
+wait1
 
 ### ---------------------------------------------------------
-### 3. INSTALL STARTER PACK
+### 3. INSTALL FLATPAK (IF NOT INSTALLED)
 ### ---------------------------------------------------------
-STARTER_PACK=(
-    wget curl git gcc make python3 python3-pip gnome-tweaks backintime-gnome zsh akmod-nvidia xorg-x11-drv-nvidia-cuda
-)
-echo "--- Installing starter packages..."
-for pkg in "${STARTER_PACK[@]}"; do
-    if ! rpm -q "$pkg" &>/dev/null; then
-        echo "Installing $pkg ..."
-        sudo dnf install -y "$pkg"
-        echo "=== Version info for $pkg ==="
-        if command -v "$pkg" &>/dev/null; then
-            "$pkg" --version 2>/dev/null || "$pkg" -V 2>/dev/null || echo "Version not available"
-        fi
-        echo "============================="
-        wait5
-    else
-        echo "$pkg already installed."
-        if command -v "$pkg" &>/dev/null; then
-            "$pkg" --version 2>/dev/null || "$pkg" -V 2>/dev/null || echo "Version not available"
-        fi
-        wait5
-    fi
-done
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
+echo -e "${GREEN}3. INSTALL FLATPAK${RESET}"
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
+
+if ! command -v flatpak &>/dev/null; then
+    sudo dnf install -y flatpak
+    echo "Flatpak version:"
+    flatpak --version
+    wait1
+else
+    echo "Flatpak already installed."
+    flatpak --version
+    wait1
+fi
 
 ### ---------------------------------------------------------
-### 4. CONFIGURE ZSH + OH-MY-ZSH + OH-MY-POSH
+### 4. ADD FLATHUB SYSTEM-WIDE
 ### ---------------------------------------------------------
-echo "--- Configuring Zsh + Oh-My-Zsh + Oh-My-Posh..."
-chsh -s "$(which zsh)" || true
-export RUNZSH=no
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || true
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
+echo -e "${GREEN}4. ADD FLATHUB SYSTEM-WIDE${RESET}"
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
 
-ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" || true
-git clone --depth 1 https://github.com/marlonrichert/zsh-autocomplete.git "$ZSH_CUSTOM/plugins/zsh-autocomplete" || true
-sed -i 's/^plugins=.*/plugins=(git zsh-autocomplete zsh-syntax-highlighting)/' ~/.zshrc
+if ! flatpak remote-list --system | awk '{print $1}' | grep -qx "flathub"; then
+    sudo flatpak remote-add --system flathub \
+        https://flathub.org/repo/flathub.flatpakrepo
+    echo "Flathub added."
+    wait1
+else
+    echo "Flathub already exists."
+    wait1
+fi
 
-curl -s https://ohmyposh.dev/install.sh | bash -s
-oh-my-posh font install FiraMono || true
-mkdir -p ~/.poshthemes
-curl -o ~/.poshthemes/cloud-native-azure.omp.json https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/refs/heads/main/themes/cloud-native-azure.omp.json
-
-grep -qxF 'export POSH_THEMES_PATH="$HOME/.poshthemes"' ~/.zshrc || echo 'export POSH_THEMES_PATH="$HOME/.poshthemes"' >> ~/.zshrc
-grep -qxF 'eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"' ~/.zshrc || echo 'eval "$(oh-my-posh init zsh --config $POSH_THEMES_PATH/cloud-native-azure.omp.json)"' >> ~/.zshrc
-wait5
+flatpak remotes --system --refresh >/dev/null 2>&1
+flatpak update --appstream -y >/dev/null 2>&1
 
 ### ---------------------------------------------------------
-### 5. INSTALL GENERAL FLATPAK APPS
+### 5. INSTALL FLATPAK APPS + SHOW VERSION
 ### ---------------------------------------------------------
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
+echo -e "${GREEN}5. INSTALL FLATPAK APPS${RESET}"
+echo -e "${GREEN}---------------------------------------------------------${RESET}"
+
 FLATPAK_APPS=(
     com.visualstudio.code
-    com.google.AndroidStudio
-    com.brave.Browser
-    org.onlyoffice.desktopeditors
-    com.obsproject.Studio
-    com.mattjakeman.ExtensionManager
-    io.missioncenter.MissionCenter
 )
 
-echo "--- Installing Flatpak apps..."
 for app in "${FLATPAK_APPS[@]}"; do
     if ! flatpak info "$app" &>/dev/null; then
         echo "Installing $app ..."
@@ -131,35 +128,12 @@ for app in "${FLATPAK_APPS[@]}"; do
         echo "=== Version info for $app ==="
         flatpak info "$app" | grep -E "Version|ID|Commit"
         echo "============================="
-        wait5
+        wait1
     else
         echo "$app already installed."
         flatpak info "$app" | grep -E "Version|ID|Commit"
-        wait5
+        wait1
     fi
 done
 
-### ---------------------------------------------------------
-### 6. INSTALL FLUTTER SDK
-### ---------------------------------------------------------
-echo "--- Installing Flutter SDK..."
-cd ~/Downloads || exit
-wget -c https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.13.9-stable.tar.xz
-tar xf flutter_linux_3.13.9-stable.tar.xz -C ~
-grep -qxF 'export PATH="$HOME/flutter/bin:$PATH"' ~/.zshrc || echo 'export PATH="$HOME/flutter/bin:$PATH"' >> ~/.zshrc
-
-echo "Flutter version:"
-~/flutter/bin/flutter --version
-wait5
-
-### ---------------------------------------------------------
-### 7. FINAL UPDATE, UPGRADE AND CLEAN
-### ---------------------------------------------------------
-echo "--- Final system update, upgrade, autoremove, clean..."
-sudo dnf update -y
-sudo dnf upgrade -y
-sudo dnf autoremove -y
-sudo dnf clean all
-wait5
-
-echo "=== Fedora Setup Completed Successfully ==="
+echo -e "${CYAN}=== Fedora Setup Completed Successfully ===${RESET}"
