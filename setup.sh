@@ -32,15 +32,18 @@ for pkg in "${REMOVE_PKGS[@]}"; do
         echo "Removing $pkg ..."
         sudo rpm -e --nodeps "$pkg" || true
         echo "$pkg removed."
-        wait5
     fi
 done
+wait5
 
 ### ---------------------------------------------------------
 ### 2. CONFIGURE DNF
 ### ---------------------------------------------------------
 echo "--- Applying optimized dnf.conf settings..."
 sudo tee /etc/dnf/dnf.conf >/dev/null <<'EOF'
+# see dnf.conf for defaults and possible options
+
+[main]
 fastestmirror=True
 defaultyes=True
 gpgcheck=1
