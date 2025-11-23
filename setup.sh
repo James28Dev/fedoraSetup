@@ -75,7 +75,6 @@ sudo dnf upgrade -y
 echo "system updated and upgraded."
 wait1
 
-
 ### ---------------------------------------------------------
 ### 3. INSTALL FLATPAK (IF NOT INSTALLED)
 ### ---------------------------------------------------------
@@ -110,9 +109,6 @@ else
     echo "Flathub already exists."
     wait1
 fi
-
-flatpak remotes --system --refresh >/dev/null 2>&1
-flatpak update --appstream -y >/dev/null 2>&1
 
 ### ---------------------------------------------------------
 ### 5. INSTALL FLATPAK APPS + SHOW VERSION
