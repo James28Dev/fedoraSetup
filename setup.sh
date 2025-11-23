@@ -91,8 +91,12 @@ step "Configure Zsh and Oh-My-Zsh"
 chsh -s "$(which zsh)" || true
 
 # Install Oh-My-Zsh
-export RUNZSH=no  # ป้องกัน shell รีสตาร์ทอัตโนมัติ
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+export RUNZSH=no         # ป้องกัน shell รีสตาร์ทอัตโนมัติ
+export CHSH=no           # ป้องกันเปลี่ยน shell อัตโนมัติ
+
+# ดาวน์โหลดและติดตั้ง Oh My Zsh แบบ non-interactive
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
 error_check "Install Oh-My-Zsh"
 
 # Install plugins
