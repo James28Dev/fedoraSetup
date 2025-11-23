@@ -23,7 +23,7 @@ error_check() {
 #############################################
 step "Clean default Fedora apps"
 
-sudo rpm -e \
+sudo dnf remove -y \
     gnome-contacts \
     gnome-weather \
     gnome-maps \
@@ -31,12 +31,11 @@ sudo rpm -e \
     gnome-color-manager \
     simple-scan \
     gnome-font-viewer \
-    gnome-photos \
     gnome-system-monitor \
     gnome-calendar \
     gnome-connections \
     mediawriter \
-    showtime
+    || true
 
 error_check "Removing unused apps"
 
