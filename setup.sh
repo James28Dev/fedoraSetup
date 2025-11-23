@@ -31,7 +31,17 @@ show_version() {
 #############################################
 # 0. OPEN RPM FUSION
 #############################################
-step "Enable RPM Fusion repos"
+step "Install Flatpak , Flathub and Enable RPM Fusion repos"
+
+# ติดตั้ง Flatpak ถ้ายังไม่มี
+if ! command -v flatpak &> /dev/null; then
+    sudo dnf install -y flatpak
+fi
+
+# เพิ่ม flathub repo ถ้ายังไม่มี
+if ! flatpak remote-list | grep -q flathub; then
+    sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+fi
 
 sudo dnf install -y \
     https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-43.noarch.rpm \
@@ -65,7 +75,7 @@ sleep 10
 #############################################
 # 2. DNF CONFIG
 #############################################
-step "Configure DNF"
+step "Configure DNF , Update and Upgrade"
 
 sudo tee /etc/dnf/dnf.conf > /dev/null <<EOF
 [main]
@@ -81,6 +91,8 @@ retries=5
 color=always
 EOF
 
+sudo dnf update -y
+sudo dnf upgrade -y
 error_check "Apply DNF config"
 sleep 10
 
@@ -178,5 +190,18 @@ sleep 10
 
 error_check "Install Flutter SDK"
 
-echo -e "\n=== Completed all steps ==="
+#############################################
+# 7. FINAL CLEANUP AND UPDATE
+#############################################
+step "Final update, upgrade and clean unused packages"
+
+sudo dnf update -y
+sudo dnf upgrade -y
+sudo dnf autoremove -y
+sudo dnf clean all
+
+error_check "Final system update and cleanup"
+sleep 10
+
+echo -e "\n=== All steps completed successfully ==="
 echo "Check setup_log.txt for details."
